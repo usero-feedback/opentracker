@@ -3,11 +3,12 @@ import { ChevronDown, ChevronRight, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from 'react-router'
-import { redirect, useFetcher } from 'react-router'
+import { Link, redirect, useFetcher } from 'react-router'
 import { z } from 'zod'
 import { RHFError } from '~/components/ErrorText'
 import { GeneralErrorBoundary } from '~/components/GeneralErrorBoundary'
 import { StatusButton } from '~/components/StatusButton'
+import { TrackerHeader } from '~/components/tracker/TrackerHeader'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
 import { Input } from '~/components/ui/input'
@@ -89,7 +90,9 @@ export default function NewProject() {
 	}
 
 	return (
-		<div className='min-h-screen flex items-center justify-center bg-slate-950 text-slate-200 p-4'>
+		<div className='min-h-screen flex flex-col bg-slate-950 text-slate-200'>
+			<TrackerHeader />
+			<main className='flex flex-1 items-start justify-center p-4 pt-12 md:pt-20'>
 			<Card className='w-full max-w-md'>
 				<CardHeader>
 					<CardTitle>Create New Project</CardTitle>
@@ -152,18 +155,19 @@ export default function NewProject() {
 							</div>
 						)}
 
-						<div className='flex gap-2 pt-2'>
-							<StatusButton type='submit' className='flex-1' status={fetcher.state}>
-								<Plus className='mr-2 h-4 w-4' />
+						<div className='flex items-center justify-end gap-2 pt-4'>
+							<Button type='button' variant='ghost' asChild className='text-slate-400 hover:text-slate-200'>
+								<Link to='/tracker?list'>Cancel</Link>
+							</Button>
+							<StatusButton type='submit' status={fetcher.state}>
+								<Plus className='h-4 w-4' />
 								Create Project
 							</StatusButton>
-							<Button type='button' variant='ghost' asChild>
-								<a href='/tracker?list'>Cancel</a>
-							</Button>
 						</div>
 					</form>
 				</CardContent>
 			</Card>
+			</main>
 		</div>
 	)
 }

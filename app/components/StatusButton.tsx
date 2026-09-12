@@ -45,7 +45,8 @@ export const StatusButton = React.forwardRef<
 
 	return (
 		<Button ref={ref} className={cn('flex justify-center gap-4', className)} {...props}>
-			<div>{children}</div>
+			{/* inline-flex keeps an icon child on the same line as the label (preflight makes svg display:block) */}
+			<span className='inline-flex items-center gap-2'>{children}</span>
 			{message ? (
 				<TooltipProvider>
 					<Tooltip>
