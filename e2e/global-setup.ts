@@ -1,57 +1,30 @@
-import { chromium } from '@playwright/test'
-import { TEST_USER_EMAIL, TEST_USER_PASSWORD } from './utils/fixtures'
+import { chromium, type FullConfig } from '@playwright/test'
+import { fillAuthForm, TEST_USER_EMAIL, TEST_USER_PASSWORD, useFreshClientIp, waitForHydration } from './utils/fixtures'
 
-/**
- * Global setup - creates test account if it doesn't exist
- */
-async function globalSetup() {
+// Makes sure the shared test account exists: try to log in, sign up if that fails
+async function globalSetup(config: FullConfig) {
+	const baseURL = config.projects[0]?.use.baseURL
+	if (!baseURL) throw new Error('baseURL is not set in playwright.config.ts')
+
 	const browser = await chromium.launch()
-	const page = await browser.newPage()
-
+	const page = await browser.newPage({ baseURL })
 	try {
-		// Try to login first
-		await page.goto('http://localhost:5155/login')
-		await page.waitForLoadState('networkidle')
-		await page.waitForTimeout(2000)
-
-		const emailInput = page.getByPlaceholder('Email')
-		await emailInput.click()
-		await emailInput.type(TEST_USER_EMAIL)
-
-		const passwordInput = page.getByPlaceholder('Password')
-		await passwordInput.click()
-		await passwordInput.type(TEST_USER_PASSWORD)
-
+		await useFreshClientIp(page)
+		await page.goto('/login')
+		await waitForHydration(page)
+		await fillAuthForm(page, TEST_USER_EMAIL, TEST_USER_PASSWORD)
 		await page.getByRole('button', { name: 'Log In' }).click()
-
-		// Wait to see if login succeeds
 		try {
 			await page.waitForURL(/\/tracker/, { timeout: 5000 })
-			console.log('Test account already exists, login successful')
+			console.log('Test account exists')
 		} catch {
-			// Login failed, need to create account
-			console.log('Test account does not exist, creating...')
-
-			await page.goto('http://localhost:5155/signup')
-			await page.waitForLoadState('networkidle')
-			await page.waitForTimeout(2000)
-
-			const signupEmail = page.getByPlaceholder('Email')
-			await signupEmail.click()
-			await signupEmail.type(TEST_USER_EMAIL)
-
-			const signupPassword = page.getByPlaceholder('Password')
-			await signupPassword.click()
-			await signupPassword.type(TEST_USER_PASSWORD)
-
+			console.log('Test account missing, creating it')
+			await page.goto('/signup')
+			await waitForHydration(page)
+			await fillAuthForm(page, TEST_USER_EMAIL, TEST_USER_PASSWORD)
 			await page.getByRole('button', { name: 'Create Account' }).click()
 			await page.waitForURL(/\/tracker/, { timeout: 15000 })
-
-			console.log('Test account created successfully')
 		}
-	} catch (error) {
-		console.error('Global setup failed:', error)
-		throw error
 	} finally {
 		await browser.close()
 	}

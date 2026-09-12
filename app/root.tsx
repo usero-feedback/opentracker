@@ -45,6 +45,11 @@ export default function App() {
 		}
 	}, [data.user])
 
+	// Lets e2e tests wait for React to attach handlers instead of sleeping
+	useEffect(() => {
+		document.documentElement.dataset.hydrated = 'true'
+	}, [])
+
 	return (
 		<html lang='en'>
 			<head>
