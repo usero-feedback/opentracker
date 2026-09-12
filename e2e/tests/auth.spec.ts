@@ -1,76 +1,52 @@
 import { test, expect } from '@playwright/test'
+import { fillAuthForm, generateTestEmail, TEST_USER_PASSWORD, useFreshClientIp, waitForHydration } from '../utils/fixtures'
 
-test.describe.serial('Authentication Flow', () => {
-	const testEmail = `e2e-${Date.now()}@test.leantracker.app`
-	const testPassword = 'TestPassword123!'
+test.describe.serial('Authentication', () => {
+	const email = generateTestEmail()
+	const password = TEST_USER_PASSWORD
 
-	test('should complete full signup flow', async ({ page }) => {
+	test.beforeEach(async ({ page }) => {
+		await useFreshClientIp(page)
+	})
+
+	test('signup lands in the tracker', async ({ page }) => {
 		await page.goto('/signup')
-		await page.waitForLoadState('networkidle')
-		await page.waitForTimeout(2000) // Wait for React hydration
-
-		const emailInput = page.getByPlaceholder('Email')
-		await emailInput.click()
-		await emailInput.type(testEmail)
-
-		const passwordInput = page.getByPlaceholder('Password')
-		await passwordInput.click()
-		await passwordInput.type(testPassword)
-
+		await waitForHydration(page)
+		await expect(page.getByRole('heading', { name: 'Sign up' })).toBeVisible()
+		await fillAuthForm(page, email, password)
 		await page.getByRole('button', { name: 'Create Account' }).click()
 		await expect(page).toHaveURL(/\/tracker/, { timeout: 15000 })
 	})
 
-	test('should login with correct credentials', async ({ page }) => {
+	test('login with correct credentials lands in the tracker', async ({ page }) => {
 		await page.goto('/login')
-		await page.waitForLoadState('networkidle')
-		await page.waitForTimeout(2000)
-
-		const emailInput = page.getByPlaceholder('Email')
-		await emailInput.click()
-		await emailInput.type(testEmail)
-
-		const passwordInput = page.getByPlaceholder('Password')
-		await passwordInput.click()
-		await passwordInput.type(testPassword)
-
+		await waitForHydration(page)
+		await expect(page.getByRole('heading', { name: 'Log in' })).toBeVisible()
+		await fillAuthForm(page, email, password)
 		await page.getByRole('button', { name: 'Log In' }).click()
 		await expect(page).toHaveURL(/\/tracker/, { timeout: 15000 })
 	})
 
-	test('should show error with wrong password', async ({ page }) => {
+	test('wrong password shows an error and stays on login', async ({ page }) => {
 		await page.goto('/login')
-		await page.waitForLoadState('networkidle')
-		await page.waitForTimeout(2000)
-
-		const emailInput = page.getByPlaceholder('Email')
-		await emailInput.click()
-		await emailInput.type(testEmail)
-
-		const passwordInput = page.getByPlaceholder('Password')
-		await passwordInput.click()
-		await passwordInput.type('WrongPassword123!')
-
+		await waitForHydration(page)
+		await fillAuthForm(page, email, 'WrongPassword123!')
 		await page.getByRole('button', { name: 'Log In' }).click()
-		await page.waitForTimeout(2000)
-		expect(page.url()).toContain('/login')
+		await expect(page.getByText('Invalid email or password', { exact: true })).toBeVisible({ timeout: 10000 })
+		await expect(page).toHaveURL(/\/login/)
 	})
 
-	test('should show error for non-existent user', async ({ page }) => {
+	test('unknown email shows an error and stays on login', async ({ page }) => {
 		await page.goto('/login')
-		await page.waitForLoadState('networkidle')
-		await page.waitForTimeout(2000)
-
-		const emailInput = page.getByPlaceholder('Email')
-		await emailInput.click()
-		await emailInput.type(`nonexistent-${Date.now()}@test.leantracker.app`)
-
-		const passwordInput = page.getByPlaceholder('Password')
-		await passwordInput.click()
-		await passwordInput.type('SomePassword123!')
-
+		await waitForHydration(page)
+		await fillAuthForm(page, generateTestEmail(), 'SomePassword123!')
 		await page.getByRole('button', { name: 'Log In' }).click()
-		await page.waitForTimeout(2000)
-		expect(page.url()).toContain('/login')
+		await expect(page.getByText('Invalid email or password', { exact: true })).toBeVisible({ timeout: 10000 })
+		await expect(page).toHaveURL(/\/login/)
+	})
+
+	test('/tracker without a session redirects to signup', async ({ page }) => {
+		await page.goto('/tracker')
+		await expect(page).toHaveURL(/\/signup/)
 	})
 })

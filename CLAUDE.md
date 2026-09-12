@@ -8,7 +8,9 @@ Pivotal Tracker style story board with an MCP server for coding agents. React Ro
 - `npm run dev`: local dev server at http://localhost:5173
 - `npm run typecheck`: regenerates worker + route types, then `tsc -b`. Run after any large change.
 - `npm test`: vitest over `app/`
-- `npm run test:e2e`: Playwright, login fixtures in `e2e/utils/fixtures.ts`
+- `npm run test:e2e`: Playwright, boots its own dev server on port 5188 (`E2E_PORT` to change), helpers in
+  `e2e/utils/fixtures.ts`. Login and signup are rate limited per IP, so every auth attempt in a test goes through
+  `useFreshClientIp()`.
 
 # Code style
 
