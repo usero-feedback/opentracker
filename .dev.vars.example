@@ -12,4 +12,4 @@ ENVIRONMENT=dev
 # GOOGLE_ANALYTICS_ID=
 # GOOGLE_ANALYTICS_API_SECRET=
 # Usero feedback widget: set to your own client id, or leave the line as "USERO_CLIENT_ID=" to hide it.
-# USERO_CLIENT_ID=
+USERO_CLIENT_ID=

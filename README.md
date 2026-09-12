@@ -54,8 +54,8 @@ Optional secrets (`wrangler secret put`): `SES_AWS_ACCESS_KEY_ID` and `SES_AWS_S
 `GOOGLE_ANALYTICS_API_SECRET`. Optional vars in `wrangler.jsonc`: `DASHBOARD_URL`, `GOOGLE_ANALYTICS_ID`, `EMAIL_FROM`,
 `ADMIN_EMAIL`, `USERO_CLIENT_ID` (set to `""` to hide the feedback widget).
 
-Email is only used for admin notifications (new signups and the like, sent to `ADMIN_EMAIL`). Leave the SES keys unset and it logs
-instead of sending.
+Email is only used for admin notifications (new signups and the like, sent from `EMAIL_FROM` to `ADMIN_EMAIL`). Leave either
+address or the SES keys unset and it logs instead of sending.
 
 ## Migrations
 

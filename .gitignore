@@ -11,16 +11,7 @@ node_modules
 .DS_Store
 app/generated/
 
-# Generated seed SQL
-scripts/seed-preview.sql
-
-# NPM Package ignores
-packages/react-feedback-collector/node_modules
-packages/react-feedback-collector/dist
-packages/react-feedback-collector/*.tsbuildinfo
-
 .react-router/*
-
 
 .gemini-clipboard/
 

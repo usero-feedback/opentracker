@@ -40,7 +40,4 @@ export default defineConfig(({ isSsrBuild }) => ({
 		allowedHosts: ['.ngrok-free.app'],
 		port: 5151,
 	},
-	// ssr: {
-	// 	noExternal: ['react-feedback-collector'],
-	// },
 }))

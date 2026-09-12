@@ -125,16 +125,6 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      - name: Seed Preview DB with Bootstrap Data
-        run: |
-          DB_NAME="${{ steps.create-db.outputs.db_name }}"
-          chmod +x scripts/seed-preview-db.sh
-          ./scripts/seed-preview-db.sh
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          DB_NAME: ${{ steps.create-db.outputs.db_name }}
-
       - name: Deploy to Preview Environment
         run: |
           npm run build

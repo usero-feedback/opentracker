@@ -14,6 +14,7 @@ import { Label } from '~/components/ui/label'
 import { passwordService } from '~/backend/passwordService'
 import { EmailSchema, PasswordSchema } from '~/types'
 import { apiKeyStorageFields, generateApiKey } from '~/utils/api-auth.server'
+import { contextToBackendConfig } from '~/utils/backendConfig'
 import { getPrisma } from '~/utils/db.server'
 import { deserialise, jsonToFormData } from '~/utils/deserialise'
 import { createUserSessionAndRedirect, requireUser } from '~/utils/session.server'
@@ -69,6 +70,7 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
 	}
 
 	return {
+		dashboardUrl: contextToBackendConfig(context).dashboardUrl,
 		user: {
 			id: dbUser.id,
 			email: dbUser.email,
@@ -134,7 +136,7 @@ export const action = ({ request, context }: ActionFunctionArgs) =>
 	)
 
 export default function ProfilePage() {
-	const { user, apiKeys } = useLoaderData<typeof loader>()
+	const { user, apiKeys, dashboardUrl } = useLoaderData<typeof loader>()
 	const [searchParams] = useSearchParams()
 	const fetcher = useFetcher()
 	const logoutFetcher = useFetcher()
@@ -172,7 +174,7 @@ export default function ProfilePage() {
 				</Card>
 			)}
 
-			<ApiKeysSection apiKeys={apiKeys} />
+			<ApiKeysSection apiKeys={apiKeys} dashboardUrl={dashboardUrl} />
 
 			{/* Profile Form */}
 			<Card>

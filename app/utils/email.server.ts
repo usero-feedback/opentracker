@@ -38,7 +38,7 @@ export interface EmailData {
 export async function sendEmailViaSES(emailData: EmailData, context: AppLoadContext): Promise<boolean> {
 	const backendConfig = contextToBackendConfig(context)
 	const ses = getSESClient(backendConfig.sesAccessKeyId, backendConfig.sesSecretAccessKey)
-	if (!ses) {
+	if (!ses || !backendConfig.emailFrom) {
 		logUnsentEmail(emailData)
 		return backendConfig.environment !== 'prod'
 	}

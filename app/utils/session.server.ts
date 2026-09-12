@@ -138,8 +138,6 @@ export async function clearAnonClientId(session: Session): Promise<void> {
 	session.unset(anonClientKey)
 }
 
-// REMOVED: getUserClient - Client model no longer exists (feedback system removed)
-
 export async function updateSession(
 	context: AppLoadContext,
 	session: Session<SessionData, SessionData>,

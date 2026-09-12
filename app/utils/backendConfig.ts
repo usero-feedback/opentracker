@@ -15,8 +15,9 @@ function buildConfig(varStore: object) {
 		sesSecretAccessKey: get('SES_AWS_SECRET_ACCESS_KEY', varStore),
 		sentryDsn: get('SENTRY_DSN', varStore),
 		gaSecret: get('GOOGLE_ANALYTICS_API_SECRET', varStore),
-		emailFrom: get('EMAIL_FROM', varStore) ?? 'will@usero.io',
-		adminEmail: get('ADMIN_EMAIL', varStore) ?? 'willsmithte@gmail.com',
+		emailFrom: get('EMAIL_FROM', varStore),
+		adminEmail: get('ADMIN_EMAIL', varStore),
+		dashboardUrl: get('DASHBOARD_URL', varStore) ?? 'http://localhost:5173',
 		...buildFrontendConfig(varStore),
 	}
 }
