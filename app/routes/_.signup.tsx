@@ -20,7 +20,7 @@ import { StatusButton } from '~/components/StatusButton'
 import { Input } from '~/components/ui/input'
 import { useToast } from '~/hooks/use-toast'
 import { EmailSchema, getRedirectToFromSearchParams, PasswordSchema } from '~/types'
-import { trackServerEvent } from '~/utils/events.server'
+import { trackEvent } from '~/utils/events.server'
 import { getPrisma } from '~/utils/db.server'
 import { deserialise, jsonToFormData } from '~/utils/deserialise'
 import { authRateLimitResponse } from '~/utils/rateLimit.server'
@@ -80,7 +80,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 			})
 
 			// Track signup event (non-blocking, uses waitUntil)
-			trackServerEvent('sign_up', { method: 'email', email: newUser.email }, request, context)
+			trackEvent('sign_up', { method: 'email', email: newUser.email }, request, context)
 
 			return createUserSessionAndRedirect({ id: newUser.id, email: newUser.email }, context, redirectTo, request)
 		},

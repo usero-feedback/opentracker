@@ -56,9 +56,6 @@ export function trackEvent(
 	}
 }
 
-// Backwards compatibility alias
-export const trackServerEvent = trackEvent
-
 // ============================================================================
 // GA Consumer
 // ============================================================================

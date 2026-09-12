@@ -10,11 +10,9 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 import { getRedirectToFromSearchParams, redirectToKey } from '~/types'
-import { ModalState } from '~/types/ModalTypes'
 import { contextToBackendConfig } from '~/utils/backendConfig'
 import { routes } from '~/utils/routes'
 import { BackendToastConfig } from '~/utils/ToasterTypes'
-import { generateClientId } from './clientId.server'
 
 export const sessionMaxAge = 60 * 60 * 24 * 360
 
@@ -79,15 +77,6 @@ export async function logout(request: Request, context: AppLoadContext) {
 
 export type SessionMutator = (s: Session<SessionData, SessionData>) => void
 
-export async function createUserSessionAndReturn(
-	user: UserSessionInfo,
-	context: AppLoadContext,
-	sessionMutator?: SessionMutator,
-	request?: Request,
-): Promise<UNSAFE_DataWithResponseInit<null>> {
-	const session = await createUserSession(user, context, request)
-	return updateSession(context, session, sessionMutator || (() => {}))
-}
 export async function createUserSessionAndRedirect(
 	user: UserSessionInfo,
 	context: AppLoadContext,
@@ -105,7 +94,6 @@ export async function createUserSession(user: UserSessionInfo, context: AppLoadC
 	return session
 }
 const userKey = 'user'
-const anonClientKey = 'anonClientId'
 
 export const UserSessionInfo = z.object({
 	id: z.string(),
@@ -113,38 +101,6 @@ export const UserSessionInfo = z.object({
 })
 export type UserSessionInfo = z.infer<typeof UserSessionInfo>
 
-// Anonymous client session helpers
-export async function getAnonClientId(request: Request, context: AppLoadContext): Promise<string | null> {
-	const session = await getUserSession(request, context)
-	return getAnonClientIdFromSession(session)
-}
-
-export function getAnonClientIdFromSession(session: Session): string | null {
-	return session.get(anonClientKey)
-}
-
-export async function setAnonClientId(session: Session): Promise<string> {
-	let clientId = session.get(anonClientKey)
-
-	if (!clientId) {
-		clientId = generateClientId()
-		session.set(anonClientKey, clientId)
-	}
-
-	return clientId
-}
-
-export async function clearAnonClientId(session: Session): Promise<void> {
-	session.unset(anonClientKey)
-}
-
-export async function updateSession(
-	context: AppLoadContext,
-	session: Session<SessionData, SessionData>,
-	sessionMutator: SessionMutator,
-): Promise<UNSAFE_DataWithResponseInit<null>> {
-	return updateSessionAndReturn(context, session, sessionMutator, null)
-}
 export async function updateSessionAndReturn<S = {}>(
 	context: AppLoadContext,
 	session: Session<SessionData, SessionData>,
@@ -184,27 +140,12 @@ export function getRedirectToFromRequest(request: Request, defaultVal?: string):
 }
 
 const toastKey = 'toast'
-const modalKey = 'modal'
 export function flashToast(session: Session<SessionData, SessionData>, config: Omit<BackendToastConfig, 'id'>) {
 	const backendConfig: BackendToastConfig = { ...config, id: Date.now() }
 	session.flash(toastKey, backendConfig)
 }
 export async function getSessionToast(session: Session<SessionData, SessionData>): Promise<BackendToastConfig | undefined> {
 	return session.get(toastKey) as BackendToastConfig | undefined
-}
-
-export function flashModal(session: Session<SessionData, SessionData>, state: ModalState) {
-	session.flash(modalKey, state)
-}
-export async function getSessionModal(session: Session<SessionData, SessionData>): Promise<ModalState | undefined> {
-	return session.get(modalKey) as ModalState | undefined
-}
-
-export function flashRedirectTo(session: Session<SessionData, SessionData>, redirectTo: string) {
-	session.flash(redirectToKey, redirectTo)
-}
-export async function getSessionRedirectTo(session: Session<SessionData, SessionData>): Promise<string | undefined> {
-	return session.get(redirectToKey) as string | undefined
 }
 
 function overrideExpiration(storage: ReturnType<typeof createStorage>) {
