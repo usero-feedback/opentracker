@@ -158,7 +158,7 @@ export default function NewProject() {
 								Create Project
 							</StatusButton>
 							<Button type='button' variant='ghost' asChild>
-								<a href='/tracker'>Cancel</a>
+								<a href='/tracker?list'>Cancel</a>
 							</Button>
 						</div>
 					</form>

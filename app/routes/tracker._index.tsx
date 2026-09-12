@@ -62,8 +62,11 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
 		},
 	})
 
-	// Straight to the board when there is only one project, unless the list was asked for (?list)
+	// Skip the list when there is nothing to choose from, unless it was asked for (?list)
 	const wantsList = new URL(request.url).searchParams.has('list')
+	if (projects.length === 0 && !wantsList) {
+		return redirect('/tracker/new')
+	}
 	if (projects.length === 1 && !wantsList) {
 		return redirect(`/tracker/${projects[0].id}`)
 	}
@@ -112,27 +115,6 @@ export default function TrackerIndex() {
 	const groupedProjectIndices = useMemo(() => {
 		return groupProjectsByRecency(filteredProjects)
 	}, [filteredProjects])
-
-	if (projects.length === 0) {
-		return (
-			<div className='min-h-screen flex items-center justify-center bg-slate-950 text-slate-200'>
-				<Card className='w-full max-w-md mx-4'>
-					<CardHeader>
-						<CardTitle>Welcome to Tracker</CardTitle>
-						<CardDescription>You don't have any projects yet. Create your first project to get started.</CardDescription>
-					</CardHeader>
-					<CardContent>
-						<Button className='w-full' asChild>
-							<Link to='/tracker/new'>
-								<Plus className='mr-2 h-4 w-4' />
-								Create Project
-							</Link>
-						</Button>
-					</CardContent>
-				</Card>
-			</div>
-		)
-	}
 
 	const renderProjectGroup = (groupName: string, projectIndices: number[]) => {
 		if (projectIndices.length === 0) {
