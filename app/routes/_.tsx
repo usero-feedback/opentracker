@@ -49,18 +49,8 @@ export type WrapperLoaderData = {
 }
 
 export const loader = async ({ request, context }: LoaderFunctionArgs) => {
-	const totalStart = performance.now()
-	console.log('[loader _.tsx] START')
-
-	const sessionStart = performance.now()
 	const session = await getUserSession(request, context)
-	console.log(`[loader _.tsx] getUserSession: ${Math.round(performance.now() - sessionStart)}ms`)
-
-	const parallelStart = performance.now()
 	const [sessionUser, toast] = await Promise.all([getUserFromSession(session), getSessionToast(session)])
-	console.log(
-		`[loader _.tsx] getUserFromSession + getSessionToast (parallel): ${Math.round(performance.now() - parallelStart)}ms`,
-	)
 
 	const loaderData: WrapperLoaderData = {
 		user: isNullOrUndefined(sessionUser) ? null : { id: sessionUser.id, email: sessionUser.email },
@@ -69,12 +59,8 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
 
 	let headers: HeadersInit = {}
 	if (toast) {
-		const commitStart = performance.now()
 		headers = { 'Set-Cookie': await createStorage(context).commitSession(session) }
-		console.log(`[loader _.tsx] commitSession: ${Math.round(performance.now() - commitStart)}ms`)
 	}
-
-	console.log(`[loader _.tsx] TOTAL: ${Math.round(performance.now() - totalStart)}ms`)
 
 	return data(loaderData, { headers })
 }

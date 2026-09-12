@@ -30,7 +30,7 @@ function ago(iso: string) {
 	return formatDistanceToNow(new Date(iso), { addSuffix: true })
 }
 
-export function ApiKeysSection({ apiKeys }: { apiKeys: ApiKeySummary[] }) {
+export function ApiKeysSection({ apiKeys, dashboardUrl }: { apiKeys: ApiKeySummary[]; dashboardUrl: string }) {
 	const createFetcher = useFetcher()
 	const revokeFetcher = useFetcher()
 	const [name, setName] = useState('')
@@ -65,9 +65,9 @@ export function ApiKeysSection({ apiKeys }: { apiKeys: ApiKeySummary[] }) {
 				<CardTitle>API keys</CardTitle>
 				<CardDescription>
 					Connect Claude Code or any MCP client at{' '}
-					<code className='font-mono text-[0.8em] text-foreground'>https://tracker.usero.io/mcp</code>, or call the API directly.
-					Send a key as <code className='font-mono text-[0.8em] text-foreground'>Authorization: Bearer lt_...</code>. A key acts
-					as you across every project you own.
+					<code className='font-mono text-[0.8em] text-foreground'>{`${dashboardUrl}/mcp`}</code>, or call the API directly. Send
+					a key as <code className='font-mono text-[0.8em] text-foreground'>Authorization: Bearer lt_...</code>. A key acts as you
+					across every project you own.
 				</CardDescription>
 			</CardHeader>
 			<CardContent className='space-y-5'>

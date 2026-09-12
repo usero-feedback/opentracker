@@ -17,9 +17,4 @@ export default {
 			cloudflare: { env, ctx },
 		})
 	},
-
-	async scheduled(controller, env, ctx) {
-		// Scheduled jobs placeholder - add tracker-specific jobs here if needed
-		console.log(`Scheduled job triggered: ${controller.cron}`)
-	},
 } satisfies ExportedHandler<Env>

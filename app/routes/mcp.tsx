@@ -3,6 +3,7 @@ import type { ActionFunctionArgs, AppLoadContext, LoaderFunctionArgs } from 'rea
 import { buildMcpServer, MCP_SERVER_NAME, MCP_SERVER_VERSION, MCP_TOOLS } from '~/mcp/registry'
 import type { McpContext } from '~/mcp/types'
 import { getApiUser } from '~/utils/api-auth.server'
+import { contextToBackendConfig } from '~/utils/backendConfig'
 import { getPrisma } from '~/utils/db.server'
 
 // Tracker MCP server at /mcp: streamable HTTP, stateless, JSON responses, bearer API key only.
@@ -10,7 +11,7 @@ import { getPrisma } from '~/utils/db.server'
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
 
 function dashboardUrl(context: AppLoadContext): string {
-	return context.cloudflare.env.DASHBOARD_URL || 'http://localhost:5173'
+	return contextToBackendConfig(context).dashboardUrl
 }
 
 function unauthorizedMessage(context: AppLoadContext): string {

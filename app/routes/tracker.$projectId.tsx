@@ -53,9 +53,6 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 
 // Loader
 export const loader = async ({ params, request, context }: LoaderFunctionArgs) => {
-	const loaderStart = performance.now()
-	console.log('[loader tracker.$projectId] START')
-
 	// Require authentication
 	const user = await requireUser(request, context)
 
@@ -74,7 +71,6 @@ export const loader = async ({ params, request, context }: LoaderFunctionArgs) =
 	const prisma = getPrisma({ context })
 
 	// Verify user owns this project
-	const projectStart = performance.now()
 	const project = await prisma.project.findUnique({
 		where: { id: projectId },
 		select: {
@@ -85,7 +81,6 @@ export const loader = async ({ params, request, context }: LoaderFunctionArgs) =
 			createdAt: true,
 		},
 	})
-	console.log(`[loader tracker.$projectId] getProject: ${(performance.now() - projectStart).toFixed(2)}ms`)
 
 	if (!project) {
 		throw new Response('Project not found', { status: 404 })
@@ -98,59 +93,24 @@ export const loader = async ({ params, request, context }: LoaderFunctionArgs) =
 	try {
 		const trackerDb = createTrackerDb(prisma, projectId)
 
-		// Time each parallel query individually
-		const parallelStart = performance.now()
 		const [currentStories, iceboxStories, doneStories, labels, stats, allAcceptedStories] = await Promise.all([
-			(async () => {
-				const start = performance.now()
-				const result = await trackerDb.getCurrentStories()
-				console.log(`[loader tracker.$projectId] getCurrentStories: ${(performance.now() - start).toFixed(2)}ms`)
-				return result
-			})(),
-			(async () => {
-				const start = performance.now()
-				const result = await trackerDb.getIceboxStories()
-				console.log(`[loader tracker.$projectId] getIceboxStories: ${(performance.now() - start).toFixed(2)}ms`)
-				return result
-			})(),
-			(async () => {
-				const start = performance.now()
-				const result = await trackerDb.getDoneStories()
-				console.log(`[loader tracker.$projectId] getDoneStories: ${(performance.now() - start).toFixed(2)}ms`)
-				return result
-			})(),
-			(async () => {
-				const start = performance.now()
-				const result = await trackerDb.getAllLabels()
-				console.log(`[loader tracker.$projectId] getAllLabels: ${(performance.now() - start).toFixed(2)}ms`)
-				return result
-			})(),
-			(async () => {
-				const start = performance.now()
-				const result = await trackerDb.getStats()
-				console.log(`[loader tracker.$projectId] getStats: ${(performance.now() - start).toFixed(2)}ms`)
-				return result
-			})(),
-			(async () => {
-				const start = performance.now()
-				const result = await prisma.story.findMany({
-					where: {
-						projectId,
-						state: 'accepted',
-						iteration: { not: null },
-					},
-					select: {
-						iteration: true,
-						points: true,
-					},
-				})
-				console.log(`[loader tracker.$projectId] velocityHistoryQuery: ${(performance.now() - start).toFixed(2)}ms`)
-				return result
-			})(),
+			trackerDb.getCurrentStories(),
+			trackerDb.getIceboxStories(),
+			trackerDb.getDoneStories(),
+			trackerDb.getAllLabels(),
+			trackerDb.getStats(),
+			prisma.story.findMany({
+				where: {
+					projectId,
+					state: 'accepted',
+					iteration: { not: null },
+				},
+				select: {
+					iteration: true,
+					points: true,
+				},
+			}),
 		])
-		console.log(
-			`[loader tracker.$projectId] parallelQueries (total wall time): ${(performance.now() - parallelStart).toFixed(2)}ms`,
-		)
 
 		// Group by iteration and sum points
 		const velocityByIteration = new Map<number, number>()
@@ -178,8 +138,6 @@ export const loader = async ({ params, request, context }: LoaderFunctionArgs) =
 			})
 			.sort((a, b) => a.iteration - b.iteration)
 
-		console.log(`[loader tracker.$projectId] TOTAL: ${(performance.now() - loaderStart).toFixed(2)}ms`)
-
 		return data<TrackerLoaderData>({
 			currentStories,
 			iceboxStories,
@@ -196,7 +154,6 @@ export const loader = async ({ params, request, context }: LoaderFunctionArgs) =
 			initialExpandedStory,
 		})
 	} catch (error) {
-		console.log(`[loader tracker.$projectId] ERROR after ${(performance.now() - loaderStart).toFixed(2)}ms`)
 		throw new Response(error instanceof Error ? error.message : 'Failed to load tracker data', { status: 503 })
 	}
 }
@@ -270,8 +227,6 @@ const ActionSchema = z.discriminatedUnion('type', [
 
 // Action
 export const action = async ({ params, request, context }: ActionFunctionArgs) => {
-	const actionStart = performance.now()
-
 	// Require authentication
 	const user = await requireUser(request, context)
 
@@ -292,15 +247,12 @@ export const action = async ({ params, request, context }: ActionFunctionArgs) =
 		return data({ error: 'Invalid action data' }, { status: 400 })
 	}
 
-	console.log(`[action tracker.$projectId] START type=${actionData.type}`)
-
 	// Determine if this action needs getStoryState
 	const actionsNeedingStoryState = ['transition', 'addComment'] as const
 	const needsStoryState =
 		actionsNeedingStoryState.includes(actionData.type as (typeof actionsNeedingStoryState)[number]) && 'storyId' in actionData
 
 	// Run verifyProject and getStoryState in parallel when both are needed
-	let opStart = performance.now()
 	let project: { userId: string } | null
 	let storyState: { state: StoryState; priority: boolean } | undefined = undefined
 
@@ -314,16 +266,12 @@ export const action = async ({ params, request, context }: ActionFunctionArgs) =
 		])
 		project = projectResult
 		storyState = storyStateResult
-		console.log(
-			`[action tracker.$projectId] verifyProject+getStoryState (parallel): ${(performance.now() - opStart).toFixed(2)}ms`,
-		)
 	} else {
 		// For other actions, just verify project ownership
 		project = await prisma.project.findUnique({
 			where: { id: projectId },
 			select: { userId: true },
 		})
-		console.log(`[action tracker.$projectId] verifyProject: ${(performance.now() - opStart).toFixed(2)}ms`)
 	}
 
 	if (!project) {
@@ -347,7 +295,6 @@ export const action = async ({ params, request, context }: ActionFunctionArgs) =
 					return data({ error: `Invalid transition: cannot ${action} from ${storyState.state}` }, { status: 400 })
 				}
 
-				opStart = performance.now()
 				switch (action) {
 					case 'start':
 						await trackerDb.startStory(storyId)
@@ -368,20 +315,15 @@ export const action = async ({ params, request, context }: ActionFunctionArgs) =
 						await trackerDb.restartStory(storyId)
 						break
 				}
-				console.log(`[action tracker.$projectId] ${action}Story: ${(performance.now() - opStart).toFixed(2)}ms`)
 				break
 			}
 			case 'togglePriority': {
-				opStart = performance.now()
 				await trackerDb.togglePriority(actionData.storyId)
-				console.log(`[action tracker.$projectId] togglePriority: ${(performance.now() - opStart).toFixed(2)}ms`)
 				break
 			}
 			case 'moveToIteration': {
 				const iterationId = actionData.iterationId === 'null' ? null : parseInt(actionData.iterationId, 10)
-				opStart = performance.now()
 				await trackerDb.moveToIteration(actionData.storyId, iterationId)
-				console.log(`[action tracker.$projectId] moveToIteration: ${(performance.now() - opStart).toFixed(2)}ms`)
 				break
 			}
 			case 'create': {
@@ -405,15 +347,11 @@ export const action = async ({ params, request, context }: ActionFunctionArgs) =
 				if (actionData.id) {
 					storyData.id = actionData.id // Pass client-provided ID if present
 				}
-				opStart = performance.now()
 				await trackerDb.createStory(storyData)
-				console.log(`[action tracker.$projectId] createStory: ${(performance.now() - opStart).toFixed(2)}ms`)
 				break
 			}
 			case 'delete': {
-				opStart = performance.now()
 				await trackerDb.deleteStory(actionData.storyId)
-				console.log(`[action tracker.$projectId] deleteStory: ${(performance.now() - opStart).toFixed(2)}ms`)
 				break
 			}
 			case 'update': {
@@ -431,28 +369,20 @@ export const action = async ({ params, request, context }: ActionFunctionArgs) =
 				if (actionData.deadline !== undefined) {
 					updates.deadline = actionData.deadline === '' ? null : actionData.deadline
 				}
-				opStart = performance.now()
 				await trackerDb.updateStory(actionData.storyId, updates)
-				console.log(`[action tracker.$projectId] updateStory: ${(performance.now() - opStart).toFixed(2)}ms`)
 				break
 			}
 			case 'addLabel': {
-				opStart = performance.now()
 				await trackerDb.addLabelToStory(actionData.storyId, actionData.labelId)
-				console.log(`[action tracker.$projectId] addLabelToStory: ${(performance.now() - opStart).toFixed(2)}ms`)
 				break
 			}
 			case 'removeLabel': {
-				opStart = performance.now()
 				await trackerDb.removeLabelFromStory(actionData.storyId, actionData.labelId)
-				console.log(`[action tracker.$projectId] removeLabelFromStory: ${(performance.now() - opStart).toFixed(2)}ms`)
 				break
 			}
 			case 'reorder': {
 				// reorderStory already does ownership check internally via getStoryState
-				opStart = performance.now()
 				const reorderedStory = await trackerDb.reorderStory(actionData.storyId, actionData.order, actionData.newIteration)
-				console.log(`[action tracker.$projectId] reorderStory: ${(performance.now() - opStart).toFixed(2)}ms`)
 				if (!reorderedStory) {
 					return data({ error: 'Story not found' }, { status: 404 })
 				}
@@ -463,27 +393,18 @@ export const action = async ({ params, request, context }: ActionFunctionArgs) =
 				if (!storyState) {
 					return data({ error: 'Story not found' }, { status: 404 })
 				}
-				opStart = performance.now()
 				await trackerDb.addComment(actionData.storyId, actionData.content)
-				console.log(`[action tracker.$projectId] addComment: ${(performance.now() - opStart).toFixed(2)}ms`)
 				break
 			}
 			case 'getComments': {
 				// Fetch comments for a story (lazy-loaded when story is expanded)
-				opStart = performance.now()
 				const comments = await trackerDb.getStoryComments(actionData.storyId)
-				console.log(`[action tracker.$projectId] getStoryComments: ${(performance.now() - opStart).toFixed(2)}ms`)
-				console.log(`[action tracker.$projectId] TOTAL: ${(performance.now() - actionStart).toFixed(2)}ms`)
 				return data({ success: true, comments })
 			}
 		}
 
-		console.log(`[action tracker.$projectId] TOTAL: ${(performance.now() - actionStart).toFixed(2)}ms`)
 		return data({ success: true })
 	} catch (error) {
-		console.log(
-			`[action tracker.$projectId] ERROR after ${(performance.now() - actionStart).toFixed(2)}ms: ${error instanceof Error ? error.message : 'Unknown error'}`,
-		)
 		return data({ error: error instanceof Error ? error.message : 'An error occurred' }, { status: 500 })
 	}
 }

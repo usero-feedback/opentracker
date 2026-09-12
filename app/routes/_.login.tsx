@@ -19,7 +19,7 @@ import { StatusButton } from '~/components/StatusButton'
 import { Input } from '~/components/ui/input'
 import { useToast } from '~/hooks/use-toast'
 import { EmailSchema, getRedirectToFromSearchParams, PasswordSchema } from '~/types'
-import { trackServerEvent } from '~/utils/events.server'
+import { trackEvent } from '~/utils/events.server'
 import { getPrisma } from '~/utils/db.server'
 import { deserialise, jsonToFormData } from '~/utils/deserialise'
 import { authRateLimitResponse } from '~/utils/rateLimit.server'
@@ -69,20 +69,9 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 			const isCorrectPassword = await passwordService.verifyPassword(existingUser.password, parsed.password)
 			if (isCorrectPassword) {
 				// Track login event (non-blocking, uses waitUntil)
-				trackServerEvent('login', { method: 'email' }, request, context)
+				trackEvent('login', { method: 'email' }, request, context)
 
-				// Removed: Anonymous client transfer (Client model deleted with feedback system)
-
-				return createUserSessionAndRedirect(
-					{ id: existingUser.id, email: existingUser.email },
-					context,
-					redirectTo,
-					session => {
-						// Clear anonymous client ID since it's now owned
-						session.unset('anonClientId')
-					},
-					request,
-				)
+				return createUserSessionAndRedirect({ id: existingUser.id, email: existingUser.email }, context, redirectTo, request)
 			} else {
 				throw invalid
 			}
@@ -109,8 +98,6 @@ export default function Component() {
 		handleSubmit,
 		register,
 		formState: { errors },
-		setValue,
-		watch,
 	} = useForm<SubmitAuthRequest>({
 		resolver: zodResolver(SubmitAuthRequest),
 		defaultValues: {},

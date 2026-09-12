@@ -21,7 +21,6 @@
 		"html_handling": "drop-trailing-slash",
 	},
 	"vars": {
-		"VALUE_FROM_CLOUDFLARE": "Hello from Cloudflare",
 		"ENVIRONMENT": "prod",
 		"DASHBOARD_URL": "https://tracker.usero.io",
 		"GOOGLE_ANALYTICS_ID": "G-VLB6CQX0L8",
@@ -32,7 +31,6 @@
 			"name": "leantracker-preview",
 			"routes": [],
 			"vars": {
-				"VALUE_FROM_CLOUDFLARE": "Hello from Cloudflare Preview",
 				"ENVIRONMENT": "preview",
 				"DASHBOARD_URL": "https://leantracker-preview.willsmithte.workers.dev",
 				"GOOGLE_ANALYTICS_ID": "G-61VH8L903R",
@@ -54,13 +52,6 @@
 			"database_id": "fdb49023-f119-4a04-bac2-f0b43645a765",
 		},
 	],
-	"triggers": {
-		"crons": [
-			// Run hourly to check for users in different timezones
-			"0 * * * *",
-		],
-	},
-
 	/**
 	 * Smart Placement
 	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

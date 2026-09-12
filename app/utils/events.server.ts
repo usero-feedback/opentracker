@@ -56,9 +56,6 @@ export function trackEvent(
 	}
 }
 
-// Backwards compatibility alias
-export const trackServerEvent = trackEvent
-
 // ============================================================================
 // GA Consumer
 // ============================================================================
@@ -145,13 +142,18 @@ async function sendAdminEmail(
 	if (!ADMIN_EMAIL_EVENTS.includes(eventName as AdminEmailEvent)) {
 		return
 	}
+	// Admin notifications are off until both addresses are configured.
+	const { adminEmail, emailFrom } = contextToBackendConfig(context)
+	if (!adminEmail || !emailFrom) {
+		return
+	}
 
 	try {
 		const { subject, body } = formatAdminEmail(eventName as AdminEmailEvent, params)
 
 		const success = await sendEmailViaSES(
 			{
-				to: contextToBackendConfig(context).adminEmail,
+				to: adminEmail,
 				subject,
 				html: body,
 				text: body.replace(/<[^>]*>/g, ''),

@@ -11,11 +11,13 @@ import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
+import { passwordService } from '~/backend/passwordService'
 import { EmailSchema, PasswordSchema } from '~/types'
 import { apiKeyStorageFields, generateApiKey } from '~/utils/api-auth.server'
+import { contextToBackendConfig } from '~/utils/backendConfig'
 import { getPrisma } from '~/utils/db.server'
 import { deserialise, jsonToFormData } from '~/utils/deserialise'
-import { requireUser } from '~/utils/session.server'
+import { createUserSessionAndRedirect, requireUser } from '~/utils/session.server'
 import { showToastOnError } from '~/utils/showToastOnError'
 
 export const meta: MetaFunction = () => {
@@ -50,7 +52,6 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
 	const user = await requireUser(request, context)
 	const prisma = getPrisma({ context })
 
-	// Get user data from database (feedback system removed)
 	const dbUser = await prisma.user.findUnique({
 		where: { id: user.id },
 		select: {
@@ -69,6 +70,7 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
 	}
 
 	return {
+		dashboardUrl: contextToBackendConfig(context).dashboardUrl,
 		user: {
 			id: dbUser.id,
 			email: dbUser.email,
@@ -104,7 +106,6 @@ export const action = ({ request, context }: ActionFunctionArgs) =>
 				await prisma.apiKey.deleteMany({ where: { id: parsed.id, userId: user.id } })
 				return { success: true }
 			} else if (parsed.type === 'updateProfile') {
-				// Verify current password (simplified - in real app you'd hash and compare)
 				const existingUser = await prisma.user.findUnique({
 					where: { id: user.id },
 				})
@@ -113,21 +114,19 @@ export const action = ({ request, context }: ActionFunctionArgs) =>
 					throw new Error('User not found')
 				}
 
-				// Simple password check (in production, use proper hashing)
-				if (existingUser.password !== parsed.currentPassword) {
+				const isCorrectPassword = await passwordService.verifyPassword(existingUser.password, parsed.currentPassword)
+				if (!isCorrectPassword) {
 					throw new Error('Current password is incorrect')
 				}
 
-				// Update user
-				await prisma.user.update({
+				const password = parsed.newPassword ? await passwordService.hashPassword(parsed.newPassword) : undefined
+				const updated = await prisma.user.update({
 					where: { id: user.id },
-					data: {
-						email: parsed.email,
-						...(parsed.newPassword && { password: parsed.newPassword }),
-					},
+					data: { email: parsed.email, password },
 				})
 
-				return redirect('/profile?updated=true')
+				// The session cookie carries the email, so refresh it after a change.
+				return createUserSessionAndRedirect({ id: updated.id, email: updated.email }, context, '/profile?updated=true', request)
 			}
 
 			return redirect('/profile')
@@ -137,7 +136,7 @@ export const action = ({ request, context }: ActionFunctionArgs) =>
 	)
 
 export default function ProfilePage() {
-	const { user, apiKeys } = useLoaderData<typeof loader>()
+	const { user, apiKeys, dashboardUrl } = useLoaderData<typeof loader>()
 	const [searchParams] = useSearchParams()
 	const fetcher = useFetcher()
 	const logoutFetcher = useFetcher()
@@ -175,7 +174,7 @@ export default function ProfilePage() {
 				</Card>
 			)}
 
-			<ApiKeysSection apiKeys={apiKeys} />
+			<ApiKeysSection apiKeys={apiKeys} dashboardUrl={dashboardUrl} />
 
 			{/* Profile Form */}
 			<Card>
