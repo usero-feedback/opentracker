@@ -63,7 +63,7 @@ export async function requireUser(request: Request, context: AppLoadContext, red
 }
 export function getLoginRedirectString(request: Request, redirectTo: string = buildRedirectTo(request)) {
 	const redirectSearchParams = new URLSearchParams([[redirectToKey, encodeURI(redirectTo)]])
-	return `${routes.signup}?${redirectSearchParams.toString()}`
+	return `${routes.login}?${redirectSearchParams.toString()}`
 }
 
 export async function logout(request: Request, context: AppLoadContext) {
@@ -92,11 +92,10 @@ export async function createUserSessionAndRedirect(
 	user: UserSessionInfo,
 	context: AppLoadContext,
 	redirectTo: string,
-	sessionMutator?: SessionMutator,
 	request?: Request,
 ) {
 	const session = await createUserSession(user, context, request)
-	return updateSessionAndRedirect(context, session, sessionMutator || (() => {}), redirectTo)
+	return updateSessionAndRedirect(context, session, () => {}, redirectTo)
 }
 export async function createUserSession(user: UserSessionInfo, context: AppLoadContext, request?: Request) {
 	const storage = createStorage(context)

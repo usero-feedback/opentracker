@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import {
 	Link,
@@ -33,7 +33,6 @@ import { isNullOrUndefined } from '~/utils/typecheck'
 const SubmitAuthRequest = z.object({
 	email: EmailSchema,
 	password: PasswordSchema,
-	timezone: z.string().optional(),
 	// Honeypot: hidden from people, filled in by bots.
 	website: z.string().optional(),
 })
@@ -83,16 +82,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 			// Track signup event (non-blocking, uses waitUntil)
 			trackServerEvent('sign_up', { method: 'email', email: newUser.email }, request, context)
 
-			return createUserSessionAndRedirect(
-				{ id: newUser.id, email: newUser.email },
-				context,
-				redirectTo,
-				session => {
-					// Clear anonymous client ID since it's now owned
-					session.unset('anonClientId')
-				},
-				request,
-			)
+			return createUserSessionAndRedirect({ id: newUser.id, email: newUser.email }, context, redirectTo, request)
 		},
 		request,
 		context,
@@ -116,23 +106,11 @@ export default function Component() {
 		handleSubmit,
 		register,
 		formState: { errors },
-		setValue,
-		watch,
 	} = useForm<SubmitAuthRequest>({
 		resolver: zodResolver(SubmitAuthRequest),
 		defaultValues: {},
 	})
 
-	// Detect and set timezone on component mount
-	useEffect(() => {
-		try {
-			const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
-			setValue('timezone', detectedTimezone)
-		} catch (error) {
-			// Fallback to UTC if detection fails
-			setValue('timezone', 'UTC')
-		}
-	}, [setValue])
 	return (
 		<div className='container flex flex-col justify-center pb-32 pt-20 mx-auto  px-4'>
 			<div className='text-center'>
