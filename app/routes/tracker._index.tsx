@@ -2,6 +2,7 @@ import { Plus, Search } from 'lucide-react'
 import { useState, useMemo } from 'react'
 import type { LoaderFunctionArgs, MetaFunction } from 'react-router'
 import { data, Link, redirect, useLoaderData } from 'react-router'
+import { TrackerHeader } from '~/components/tracker/TrackerHeader'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
 import { Input } from '~/components/ui/input'
@@ -153,8 +154,9 @@ export default function TrackerIndex() {
 	}
 
 	return (
-		<div className='min-h-screen bg-slate-950 text-slate-200 p-8'>
-			<div className='max-w-6xl mx-auto'>
+		<div className='min-h-screen bg-slate-950 text-slate-200'>
+			<TrackerHeader />
+			<div className='max-w-6xl mx-auto p-4 md:p-8'>
 				<div className='flex items-center justify-between mb-8'>
 					<div>
 						<h1 className='text-3xl font-bold mb-2'>Your Projects</h1>
@@ -183,7 +185,9 @@ export default function TrackerIndex() {
 
 				{filteredProjects.length === 0 ? (
 					<div className='text-center py-12'>
-						<p className='text-slate-400'>No projects found matching "{searchTerm}"</p>
+						<p className='text-slate-400'>
+							{searchTerm.trim() ? `No projects found matching "${searchTerm}"` : 'No projects yet. Create one to get started.'}
+						</p>
 					</div>
 				) : (
 					<>
