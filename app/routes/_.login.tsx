@@ -162,8 +162,7 @@ export default function Component() {
 				</p>
 				<div className='mt-8 text-center'>
 					<p className='text-sm text-gray-400 max-w-md mx-auto leading-relaxed'>
-						Access your feedback dashboard to analyze user insights, track sentiment trends, and manage your feedback collection
-						settings.
+						Log in to your story board, where your coding agents pick up work and you accept or reject it.
 					</p>
 				</div>
 			</div>

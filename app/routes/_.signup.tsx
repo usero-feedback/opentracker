@@ -175,7 +175,7 @@ export default function Component() {
 				</p>
 				<div className='mt-8 text-center'>
 					<p className='text-sm text-gray-400 max-w-md mx-auto leading-relaxed'>
-						Simple React widget for collecting user feedback with powerful analytics dashboard. Get started for free today.
+						A free, open source story board your coding agents work from, with an MCP server built in.
 					</p>
 				</div>
 			</div>
