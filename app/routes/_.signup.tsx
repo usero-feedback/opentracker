@@ -81,9 +81,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 			})
 
 			// Track signup event (non-blocking, uses waitUntil)
-			trackServerEvent('sign_up', { method: 'email' }, request, context)
-
-			// Removed: Anonymous client transfer (Client and NotificationSettings models deleted with feedback system)
+			trackServerEvent('sign_up', { method: 'email', email: newUser.email }, request, context)
 
 			return createUserSessionAndRedirect(
 				{ id: newUser.id, email: newUser.email },
