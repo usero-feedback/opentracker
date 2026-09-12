@@ -1,0 +1,15 @@
+# Copy to .dev.vars for local dev. Only SESSION_SECRET is required.
+SESSION_SECRET=change-me-to-a-long-random-string
+ENVIRONMENT=dev
+
+# Optional. Leave unset and the feature is off.
+# DASHBOARD_URL=http://localhost:5173
+# EMAIL_FROM=you@example.com
+# ADMIN_EMAIL=you@example.com
+# SES_AWS_ACCESS_KEY_ID=
+# SES_AWS_SECRET_ACCESS_KEY=
+# SENTRY_DSN=
+# GOOGLE_ANALYTICS_ID=
+# GOOGLE_ANALYTICS_API_SECRET=
+# Usero feedback widget: set to your own client id, or leave the line as "USERO_CLIENT_ID=" to hide it.
+# USERO_CLIENT_ID=

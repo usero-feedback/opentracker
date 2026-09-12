@@ -1,0 +1,174 @@
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Eye, EyeOff } from 'lucide-react'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import {
+	Link,
+	LoaderFunctionArgs,
+	MetaDescriptor,
+	useFetcher,
+	useSearchParams,
+	type ActionFunctionArgs,
+	type MetaFunction,
+} from 'react-router'
+import { z } from 'zod'
+import { passwordService } from '~/backend/passwordService'
+import { RHFError } from '~/components/ErrorText'
+import { GeneralErrorBoundary } from '~/components/GeneralErrorBoundary'
+import { StatusButton } from '~/components/StatusButton'
+import { Input } from '~/components/ui/input'
+import { useToast } from '~/hooks/use-toast'
+import { EmailSchema, getRedirectToFromSearchParams, PasswordSchema } from '~/types'
+import { trackServerEvent } from '~/utils/events.server'
+import { getPrisma } from '~/utils/db.server'
+import { deserialise, jsonToFormData } from '~/utils/deserialise'
+import { authRateLimitResponse } from '~/utils/rateLimit.server'
+import { canonicalMetadata } from '~/utils/metadata'
+import { routes } from '~/utils/routes'
+import { createUserSessionAndRedirect, getRedirectToFromRequest } from '~/utils/session.server'
+import { showToastOnError } from '~/utils/showToastOnError'
+import { isNullOrUndefined } from '~/utils/typecheck'
+
+const SubmitAuthRequest = z.object({
+	email: EmailSchema,
+	password: PasswordSchema,
+})
+type SubmitAuthRequest = z.infer<typeof SubmitAuthRequest>
+
+export const loader = ({ request }: LoaderFunctionArgs) => {
+	return { meta: canonicalMetadata(request) }
+}
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) => {
+	const meta = loaderData?.meta
+	const data: MetaDescriptor[] = [
+		{ title: 'Log in, opentracker' },
+		{
+			name: 'description',
+			content: 'Log in to your opentracker account.',
+		},
+	]
+	if (meta) data.push(meta)
+	return data
+}
+
+export const action = async ({ request, context }: ActionFunctionArgs) => {
+	const limited = await authRateLimitResponse(request, context, 'login')
+	if (limited) return limited
+	return showToastOnError(
+		async () => {
+			const prisma = getPrisma({ context })
+			const redirectTo = getRedirectToFromRequest(request)
+
+			const parsed = await deserialise(request, SubmitAuthRequest)
+			const existingUser = await prisma.user.findUnique({
+				where: { email: parsed.email },
+			})
+			// Same message whether the email exists or not, so login can't be used to enumerate accounts.
+			const invalid = new Error('Invalid email or password')
+			if (isNullOrUndefined(existingUser)) throw invalid
+			const isCorrectPassword = await passwordService.verifyPassword(existingUser.password, parsed.password)
+			if (isCorrectPassword) {
+				// Track login event (non-blocking, uses waitUntil)
+				trackServerEvent('login', { method: 'email' }, request, context)
+
+				// Removed: Anonymous client transfer (Client model deleted with feedback system)
+
+				return createUserSessionAndRedirect(
+					{ id: existingUser.id, email: existingUser.email },
+					context,
+					redirectTo,
+					session => {
+						// Clear anonymous client ID since it's now owned
+						session.unset('anonClientId')
+					},
+					request,
+				)
+			} else {
+				throw invalid
+			}
+		},
+		request,
+		context,
+	)
+}
+
+export default function Component() {
+	const fetcher = useFetcher()
+	const { toast } = useToast()
+	const [searchParams] = useSearchParams()
+	const redirectTo = getRedirectToFromSearchParams(searchParams)
+	const [showPassword, setShowPassword] = useState(false)
+
+	const onSubmit = async (data: SubmitAuthRequest) => {
+		fetcher.submit(jsonToFormData(data), {
+			method: 'post',
+		})
+	}
+
+	const {
+		handleSubmit,
+		register,
+		formState: { errors },
+		setValue,
+		watch,
+	} = useForm<SubmitAuthRequest>({
+		resolver: zodResolver(SubmitAuthRequest),
+		defaultValues: {},
+	})
+
+	return (
+		<div className='container flex flex-col justify-center pb-32 pt-20 mx-auto  px-4'>
+			<div className='text-center'>
+				<h1 className='text-h1'>Log in</h1>
+			</div>
+			<div className='mx-auto mt-8 min-w-full max-w-sm sm:min-w-[368px]'>
+				<form onSubmit={handleSubmit(onSubmit)}>
+					<div>
+						<Input {...register('email')} placeholder='Email' type='email' autoFocus />
+						<RHFError errors={errors} name='email' />
+					</div>
+					<div>
+						<div className='relative'>
+							<Input {...register('password')} placeholder='Password' type={showPassword ? 'text' : 'password'} />
+							<button
+								type='button'
+								onClick={() => setShowPassword(!showPassword)}
+								className='absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-500 hover:text-gray-700'
+								aria-label={showPassword ? 'Hide password' : 'Show password'}
+							>
+								{showPassword ? <EyeOff className='h-4 w-4' /> : <Eye className='h-4 w-4' />}
+							</button>
+						</div>
+						<RHFError errors={errors} name='password' />
+						<div className='text-right mt-1'>
+							<button
+								type='button'
+								onClick={() => toast({ title: 'Password reset coming soon' })}
+								className='text-sm text-gray-500 hover:text-gray-700 underline'
+							>
+								Forgot password?
+							</button>
+						</div>
+					</div>
+					<StatusButton className='w-full' status={fetcher.state} type='submit'>
+						Log In
+					</StatusButton>
+				</form>
+				<p className='mt-4 text-center text-sm'>
+					Don't have an account?{' '}
+					<Link to={`${routes.signup}?redirectTo=${encodeURIComponent(redirectTo ?? '/')}`} className='underline'>
+						Sign up
+					</Link>
+				</p>
+				<div className='mt-8 text-center'>
+					<p className='text-sm text-gray-400 max-w-md mx-auto leading-relaxed'>
+						Access your feedback dashboard to analyze user insights, track sentiment trends, and manage your feedback collection
+						settings.
+					</p>
+				</div>
+			</div>
+		</div>
+	)
+}
+
+export const ErrorBoundary = GeneralErrorBoundary

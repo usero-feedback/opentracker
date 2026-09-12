@@ -1,0 +1,92 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "leantracker",
+	"compatibility_date": "2025-04-04",
+	"main": "./build/server/index.js",
+	// Self-hosters: replace with your own route (or drop it and use the workers.dev URL).
+	// Custom domain tracker.usero.io is set in the dashboard. The explicit route is needed too:
+	// the zone's */* route to the main Usero app otherwise wins over the custom domain.
+	"routes": [{ "pattern": "tracker.usero.io/*", "zone_name": "usero.io" }],
+
+	"dev": {
+		"port": 8787,
+	},
+
+	"assets": {
+		"directory": "./build/client",
+		"html_handling": "drop-trailing-slash",
+	},
+	"vars": {
+		"VALUE_FROM_CLOUDFLARE": "Hello from Cloudflare",
+		"ENVIRONMENT": "prod",
+		"DASHBOARD_URL": "https://tracker.usero.io",
+		"GOOGLE_ANALYTICS_ID": "G-VLB6CQX0L8",
+	},
+	"preview_urls": true,
+	"env": {
+		"preview": {
+			"name": "leantracker-preview",
+			"routes": [],
+			"vars": {
+				"VALUE_FROM_CLOUDFLARE": "Hello from Cloudflare Preview",
+				"ENVIRONMENT": "preview",
+				"DASHBOARD_URL": "https://leantracker-preview.willsmithte.workers.dev",
+				"GOOGLE_ANALYTICS_ID": "G-61VH8L903R",
+			},
+			"d1_databases": [
+				{ "binding": "DB", "database_name": "leantracker-preview", "database_id": "464a0f1b-dab2-4f2b-8c28-5aeffbce1724" },
+			],
+		},
+	},
+	"observability": {
+		"enabled": true,
+		"head_sampling_rate": 1,
+	},
+	// Self-hosters: replace database_id with the one from `wrangler d1 create`.
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "leantracker",
+			"database_id": "fdb49023-f119-4a04-bac2-f0b43645a765",
+		},
+	],
+	"triggers": {
+		"crons": [
+			// Run hourly to check for users in different timezones
+			"0 * * * *",
+		],
+	},
+
+	/**
+	 * Smart Placement
+	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
+	 */
+	"placement": { "mode": "smart" },
+
+	/**
+	 * Bindings
+	 * Bindings allow your Worker to interact with resources on the Cloudflare Developer Platform, including
+	 * databases, object storage, AI inference, real-time communication and more.
+	 * https://developers.cloudflare.com/workers/runtime-apis/bindings/
+	 */
+
+	/**
+	 * Environment Variables
+	 * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
+	 */
+	// "vars": { "MY_VARIABLE": "production_value" },
+	/**
+	 * Note: Use secrets to store sensitive data.
+	 * https://developers.cloudflare.com/workers/configuration/secrets/
+	 */
+
+	/**
+	 * Static Assets
+	 * https://developers.cloudflare.com/workers/static-assets/binding/
+	 */
+	// "assets": { "directory": "./public/", "binding": "ASSETS" },
+}

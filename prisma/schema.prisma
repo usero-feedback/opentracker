@@ -1,0 +1,113 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+  // previewFeatures = ["queryCompiler", "driverAdapters"]
+  // output          = "../app/generated/prisma"
+  // moduleFormat    = "esm"
+  // runtime         = "cloudflare"
+  // runtime         = "edge-light"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String @id @default(cuid())
+  email    String @unique
+  password String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projects Project[]
+  apiKeys  ApiKey[]
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  keyHash    String    @unique
+  prefix     String
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model Project {
+  id              String   @id @default(cuid())
+  name            String
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stories         Story[]
+  labels          Label[]
+  velocity        Int      @default(10)
+  iterationLength Int      @default(7)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Story {
+  id          String       @id @default(cuid())
+  number      Int
+  projectId   String
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title       String
+  description String       @default("")
+  type        String // feature, bug, chore, release
+  state       String       @default("unscheduled")
+  points      Int?
+  priority    Boolean      @default(false)
+  iteration   Int?
+  position    Float        @default(0)
+  deadline    String?
+  labels      StoryLabel[]
+  comments    Comment[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@unique([projectId, number])
+  @@index([projectId])
+  @@index([projectId, state])
+  @@index([projectId, iteration])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  storyId   String
+  story     Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([storyId])
+}
+
+model Label {
+  id        String       @id @default(cuid())
+  projectId String
+  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name      String
+  color     String       @default("#888888")
+  stories   StoryLabel[]
+  createdAt DateTime     @default(now())
+
+  @@index([projectId])
+}
+
+model StoryLabel {
+  storyId String
+  labelId String
+  story   Story  @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  label   Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([storyId, labelId])
+  @@index([storyId])
+  @@index([labelId])
+}
