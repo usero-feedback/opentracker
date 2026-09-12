@@ -45,8 +45,8 @@ test.describe.serial('Authentication', () => {
 		await expect(page).toHaveURL(/\/login/)
 	})
 
-	test('/tracker without a session redirects to signup', async ({ page }) => {
+	test('/tracker without a session redirects to login', async ({ page }) => {
 		await page.goto('/tracker')
-		await expect(page).toHaveURL(/\/signup/)
+		await expect(page).toHaveURL(/\/login\?redirectTo=%2Ftracker/)
 	})
 })
