@@ -11,28 +11,28 @@ export let loader: LoaderFunction = () => {
 			theme_color: '#0a0a0b',
 			icons: [
 				{
-					src: '/icons/favicon-96x96.png',
+					src: '/icons/favicon-96x96.png?v=2',
 					sizes: '96x96',
 					type: 'image/png',
 				},
 				{
-					src: '/icons/web-app-manifest-192x192.png',
+					src: '/icons/web-app-manifest-192x192.png?v=2',
 					sizes: '192x192',
 					type: 'image/png',
 				},
 				{
-					src: '/icons/web-app-manifest-512x512.png',
+					src: '/icons/web-app-manifest-512x512.png?v=2',
 					sizes: '512x512',
 					type: 'image/png',
 					purpose: 'maskable',
 				},
 				{
-					src: '/icons/apple-touch-icon.png',
+					src: '/icons/apple-touch-icon.png?v=2',
 					sizes: '180x180',
 					type: 'image/png',
 				},
 				{
-					src: '/icons/favicon.svg',
+					src: '/icons/favicon.svg?v=2',
 					sizes: 'any',
 					type: 'image/svg+xml',
 				},

@@ -52,9 +52,10 @@ export default function App() {
 				<meta name='viewport' content='width=device-width, initial-scale=1' />
 				<Meta />
 				<Links />
-				<link rel='manifest' href='/resources/manifest.json' />
-				<link rel='icon' href='/icons/favicon.svg' type='image/svg+xml' />
-				<link rel='icon' href='/icons/favicon-96x96.png' sizes='96x96' type='image/png' />
+				<link rel='manifest' href='/resources/manifest.json?v=2' />
+				<link rel='icon' href='/icons/favicon.svg?v=2' type='image/svg+xml' />
+				<link rel='icon' href='/icons/favicon-96x96.png?v=2' sizes='96x96' type='image/png' />
+				<link rel='apple-touch-icon' href='/icons/apple-touch-icon.png?v=2' sizes='180x180' />
 				{data.frontendConfig.gaId && <GoogleAnalytics gaId={data.frontendConfig.gaId} />}
 			</head>
 			<body className='min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900'>
