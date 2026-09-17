@@ -80,7 +80,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 			})
 
 			// Track signup event (non-blocking, uses waitUntil)
-			trackEvent('sign_up', { method: 'email', email: newUser.email }, request, context)
+			trackEvent('sign_up', { method: 'email', email: newUser.email, userId: newUser.id }, request, context)
 
 			return createUserSessionAndRedirect({ id: newUser.id, email: newUser.email }, context, redirectTo, request)
 		},

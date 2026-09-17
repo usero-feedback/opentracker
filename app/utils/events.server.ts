@@ -169,18 +169,22 @@ async function sendAdminEmail(
 	}
 }
 
-function formatAdminEmail(
+export function formatAdminEmail(
 	eventName: AdminEmailEvent,
 	params: Record<string, string | number | boolean>,
 ): { subject: string; body: string } {
 	const timestamp = new Date().toISOString()
 
 	switch (eventName) {
-		case 'sign_up':
+		case 'sign_up': {
+			// Fall back to the user id if email is missing so the subject never reads "undefined".
+			const identity =
+				typeof params.email === 'string' && params.email.length > 0 ? params.email : `user ${params.userId ?? 'unknown'}`
 			return {
-				subject: `New signup: ${params.email}`,
-				body: `<p>New user signed up</p><p><strong>Email:</strong> ${params.email}</p><p><strong>Time:</strong> ${timestamp}</p>`,
+				subject: `New signup: ${identity}`,
+				body: `<p>New user signed up</p><p><strong>Email:</strong> ${identity}</p><p><strong>Time:</strong> ${timestamp}</p>`,
 			}
+		}
 
 		default: {
 			const _exhaustive: never = eventName
