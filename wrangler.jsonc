@@ -24,6 +24,8 @@
 		"ENVIRONMENT": "prod",
 		"DASHBOARD_URL": "https://tracker.usero.io",
 		"GOOGLE_ANALYTICS_ID": "G-VLB6CQX0L8",
+		// The usero.io zone's Web Analytics site (filter by host). Self-hosters: remove or use your own site's token.
+		"CLOUDFLARE_WEB_ANALYTICS_TOKEN": "c3e132634b5147698a0bb91844b4e8de",
 	},
 	"preview_urls": true,
 	"env": {

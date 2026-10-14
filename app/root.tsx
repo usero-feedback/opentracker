@@ -3,6 +3,7 @@ import { Links, LinksFunction, Meta, Outlet, Scripts, ScrollRestoration, useLoad
 
 import { Route } from '.react-router/types/app/routes/+types/_'
 import { UseroFeedbackWidget } from '@usero/sdk/react'
+import { CloudflareWebAnalytics } from '~/components/CloudflareWebAnalytics'
 import { GeneralErrorBoundary } from '~/components/GeneralErrorBoundary'
 import { GoogleAnalytics } from '~/components/GoogleAnalytics'
 import { Toaster } from '~/components/ui/toaster'
@@ -62,6 +63,7 @@ export default function App() {
 				<link rel='icon' href='/icons/favicon-96x96.png?v=2' sizes='96x96' type='image/png' />
 				<link rel='apple-touch-icon' href='/icons/apple-touch-icon.png?v=2' sizes='180x180' />
 				{data.frontendConfig.gaId && <GoogleAnalytics gaId={data.frontendConfig.gaId} />}
+				{data.frontendConfig.cfWebAnalyticsToken && <CloudflareWebAnalytics token={data.frontendConfig.cfWebAnalyticsToken} />}
 			</head>
 			<body className='min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900'>
 				<Outlet />

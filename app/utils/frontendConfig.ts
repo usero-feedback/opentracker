@@ -4,9 +4,12 @@ export type FrontendConfig = ReturnType<typeof buildFrontendConfig>
 const DEFAULT_USERO_CLIENT_ID = 'client_79f87b29b89b4c76'
 
 export function buildFrontendConfig(varStore: object) {
+	const environment = get('ENVIRONMENT', varStore) ?? 'dev'
 	return {
-		environment: get('ENVIRONMENT', varStore) ?? 'dev',
+		environment,
 		gaId: get('GOOGLE_ANALYTICS_ID', varStore),
+		// Local dev inherits the top-level wrangler vars, so gate on prod too.
+		cfWebAnalyticsToken: environment === 'prod' ? get('CLOUDFLARE_WEB_ANALYTICS_TOKEN', varStore) : undefined,
 		useroClientId: useroClientId(varStore),
 	}
 }
